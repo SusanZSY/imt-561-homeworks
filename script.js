@@ -95,6 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const target = document.getElementById(btn.dataset.target);
             if (target) target.classList.add('active');
 
+            // Persist current tab in URL so refresh keeps the same view.
+            if (btn.dataset.target) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', btn.dataset.target);
+                window.history.replaceState({}, '', url);
+            }
+
             const sketchId = btn.dataset.sketch;
             if (sketchId) {
                 try {
