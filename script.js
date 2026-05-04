@@ -51,15 +51,26 @@ function getDefaultButton(buttons) {
 
 function loadSketchScriptIfNeeded(sketchId) {
     return new Promise((resolve, reject) => {
-        // if (window._sketchScriptsLoaded[sketchId]) return resolve();
+        if (window._sketchScriptsLoaded[sketchId]) return resolve();
         const src = SKETCH_SCRIPT_BY_ID[sketchId];
         if (!src) return reject(new Error('No script configured for ' + sketchId));
         const s = document.createElement('script');
-        s.src = src;
+        const version = '2026-05-04-sketch-refresh';
+        s.src = `${src}?v=${encodeURIComponent(version)}`;
         s.onload = () => { window._sketchScriptsLoaded[sketchId] = true; resolve(); };
         s.onerror = () => reject(new Error('Failed to load ' + src));
         document.body.appendChild(s);
     });
+}
+
+function showSketchLoadError(sketchId, message) {
+    const container = document.getElementById('sketch-container-' + sketchId);
+    if (!container) return;
+    container.innerHTML = '';
+    const box = document.createElement('div');
+    box.className = 'sketch-load-error';
+    box.textContent = message;
+    container.appendChild(box);
 }
 
 function createOrShowSketch(sketchId) {
@@ -147,8 +158,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     await loadSketchScriptIfNeeded(sketchId);
                     // if the sketch file registered a factory, create it; if not, wait a tick
                     if (window._sketchRegistry[sketchId]) createOrShowSketch(sketchId);
-                    else setTimeout(() => { if (window._sketchRegistry[sketchId]) createOrShowSketch(sketchId); }, 50);
-                } catch (err) { console.error(err); }
+                    else {
+                        setTimeout(() => {
+                            if (window._sketchRegistry[sketchId]) createOrShowSketch(sketchId);
+                            else showSketchLoadError(sketchId, 'This sketch loaded, but it did not register correctly. Refresh the page and try again.');
+                        }, 50);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showSketchLoadError(sketchId, 'This sketch file could not be loaded. Refresh the page and try again.');
+                }
             } else {
                 Object.values(window._sketchInstances).forEach(inst => { if (inst && inst.canvas) inst.canvas.style.display = 'none'; });
             }

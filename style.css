@@ -214,3 +214,14 @@ canvas {
   display: block;
   margin: 0 auto;
 }
+
+.sketch-load-error {
+  max-width: 700px;
+  margin: 16px auto;
+  padding: 14px 16px;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  line-height: 1.4;
+}
