@@ -1,6 +1,19 @@
 // Instance-mode sketch for tab 2
 registerSketch('sk2', function (p) {
   const CANVAS_SIZE = 800;
+  const CHEF_SPRITE_PATH = 'images/chef-default-idle.avif';
+  const CHEF_SPATULA_PATH = 'images/steps3to6-chef-spatula.jpg';
+  const CHEF_KNIFE_PATH = 'images/step2-chef-knife.png';
+  const CHEF_CUP_PATH = 'images/step8-chef-cup.jpg';
+  const VEGETABLE_SPRITE_PATH = 'images/vegetable-sprites.jpg';
+  const EGG_PAN_PATH = 'images/step4-egg-pan.jpg';
+  const SINK_PATH = 'images/step1-sink.jpg';
+  const BUTTER_PAN_PATH = 'images/step3-butter-pan.jpg';
+  const BACON_PAN_PATH = 'images/step5-bacon-pan.jpg';
+  const PLATE_BREAKFAST_PATH = 'images/step9-plate-breakfast.jpg';
+  const BUTTER_TOAST_PATH = 'images/step7-butter-toast.jpg';
+  const COFFEE_CUP_PATH = 'images/step8-coffee-cup.png';
+  const FULL_BREAKFAST_PATH = 'images/step10-full-breakfast.webp';
   const selectorValues = [60, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
   const steps = [
     { label: 'Wash vegetables', short: 'Wash vegetables', detail: 'Chef rinses the vegetables at the sink.', weight: 13, accent: '#79b8f3' },
@@ -20,6 +33,19 @@ registerSketch('sk2', function (p) {
   let startedWallClock = 0;
   let scheduleSeconds = [];
   let totalDurationSeconds = 0;
+  let lastDrawError = null;
+  let chefSprite = null;
+  let chefSpriteReady = false;
+  let chefSpatulaSprite = null;
+  let chefSpatulaReady = false;
+  let chefKnifeSprite = null;
+  let chefKnifeReady = false;
+  let chefCupSprite = null;
+  let chefCupReady = false;
+  let vegetableSprite = null;
+  let vegetableSpriteReady = false;
+  const sceneImages = {};
+  const vegetableSprites = {};
 
   const layout = {
     selector: { x: 245, y: 365, rOuter: 165, rInner: 80 },
@@ -30,32 +56,141 @@ registerSketch('sk2', function (p) {
     resetButton: { x: 560, y: 705, w: 160, h: 42 },
   };
 
+  p.preload = function () {
+    chefSprite = p.loadImage(
+      CHEF_SPRITE_PATH,
+      function (img) {
+        chefSprite = prepareStandaloneImage(img, {});
+        chefSpriteReady = true;
+      },
+      function (err) {
+        chefSpriteReady = false;
+        console.warn('Chef avatar failed to load:', err);
+      }
+    );
+
+    chefSpatulaSprite = p.loadImage(
+      CHEF_SPATULA_PATH,
+      function (img) {
+        chefSpatulaSprite = prepareStandaloneImage(img, {});
+        chefSpatulaReady = true;
+      },
+      function (err) {
+        chefSpatulaReady = false;
+        console.warn('Chef spatula image failed to load:', err);
+      }
+    );
+
+    chefKnifeSprite = p.loadImage(
+      CHEF_KNIFE_PATH,
+      function (img) {
+        chefKnifeSprite = prepareStandaloneImage(img, {});
+        chefKnifeReady = true;
+      },
+      function (err) {
+        chefKnifeReady = false;
+        console.warn('Chef knife image failed to load:', err);
+      }
+    );
+
+    chefCupSprite = p.loadImage(
+      CHEF_CUP_PATH,
+      function (img) {
+        chefCupSprite = prepareStandaloneImage(img, {});
+        chefCupReady = true;
+      },
+      function (err) {
+        chefCupReady = false;
+        console.warn('Chef cup image failed to load:', err);
+      }
+    );
+
+    vegetableSprite = p.loadImage(
+      VEGETABLE_SPRITE_PATH,
+      function (img) {
+        prepareVegetableSprites(img);
+        vegetableSpriteReady = true;
+      },
+      function (err) {
+        vegetableSpriteReady = false;
+        console.warn('Vegetable sprite sheet failed to load:', err);
+      }
+    );
+
+    loadSceneAsset('eggPan', EGG_PAN_PATH, { tolerance: 46 });
+    loadSceneAsset('sink', SINK_PATH, { tolerance: 36 });
+    loadSceneAsset('butterPan', BUTTER_PAN_PATH, { tolerance: 42, crop: { x: 0.02, y: 0.0, w: 0.96, h: 0.84 } });
+    loadSceneAsset('baconPan', BACON_PAN_PATH, { tolerance: 52, crop: { x: 0.02, y: 0.02, w: 0.88, h: 0.74 } });
+    loadSceneAsset('plateBreakfast', PLATE_BREAKFAST_PATH, { tolerance: 34 });
+    loadSceneAsset('butterToast', BUTTER_TOAST_PATH, { tolerance: 46 });
+    loadSceneAsset('coffeeCup', COFFEE_CUP_PATH, { tolerance: 20 });
+    loadSceneAsset('fullBreakfast', FULL_BREAKFAST_PATH, { tolerance: 36, crop: { x: 0.0, y: 0.0, w: 1.0, h: 0.84 } });
+  };
+
   p.setup = function () {
     p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
+    p.canvas.style.display = 'block';
     p.textFont('Georgia');
     rebuildSchedule();
   };
 
   p.draw = function () {
-    drawBackground();
+    try {
+      drawBackground();
 
-    if (phase === 'select') {
-      drawSelectionScreen();
-    } else if (phase === 'cooking') {
-      updateCookingState();
-      if (phase === 'done') drawDoneScreen();
-      else drawCookingScreen();
-    } else {
-      drawDoneScreen();
+      if (phase === 'select') {
+        drawSelectionScreen();
+      } else if (phase === 'cooking') {
+        updateCookingState();
+        if (phase === 'done') drawDoneScreen();
+        else drawCookingScreen();
+      } else {
+        drawDoneScreen();
+      }
+
+      lastDrawError = null;
+    } catch (err) {
+      lastDrawError = err;
+      console.error('sk2 draw error:', err);
+      drawErrorFallback(err);
+    } finally {
+      drawCanvasFrame();
     }
+  };
 
+  function drawCanvasFrame() {
+    // Keep the familiar homework frame visible even if inner drawing changes.
     p.noFill();
     p.stroke(26, 37, 56, 90);
     p.strokeWeight(1);
     p.rect(0, 0, p.width - 1, p.height - 1);
-  };
+  }
+
+  function drawErrorFallback(err) {
+    p.background(255);
+    p.noStroke();
+    p.fill(180, 60, 60);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(30);
+    p.text('HWK #4. A', p.width / 2, p.height / 2 - 50);
+
+    p.fill(60);
+    p.textSize(18);
+    p.text('Canvas loaded, but the sketch hit an error.', p.width / 2, p.height / 2);
+    p.textSize(14);
+    p.text('Open the browser console to see the exact message.', p.width / 2, p.height / 2 + 28);
+
+    if (err && err.message) {
+      p.fill(110, 40, 40);
+      p.text(err.message, p.width / 2, p.height / 2 + 58, 620, 80);
+    }
+  }
 
   p.mousePressed = function () {
+    if (lastDrawError) {
+      return;
+    }
+
     if (phase === 'select') {
       const dialValue = detectSelectorClick(p.mouseX, p.mouseY);
       if (dialValue !== null) {
@@ -263,12 +398,13 @@ registerSketch('sk2', function (p) {
 
     p.fill(100, 112, 126);
     p.textSize(17);
-    p.text('The plate and coffee mug are on the table, ready to serve.', p.width / 2, 225);
+    p.text('The full American breakfast is ready with coffee on the table.', p.width / 2, 225);
 
     drawTableScene();
-    drawPlateMeal(370, 515, 220, 1);
-    drawCoffeeMug(575, 500, 1.1, true);
-    drawChef(180, 500, 1.06, 'serve', 1);
+    if (!drawSceneImage('fullBreakfast', 400, 490, 470, 290, 0)) {
+      drawPlateMeal(370, 515, 220, 1);
+      drawCoffeeMug(575, 500, 1.1, true);
+    }
     drawSparkles();
     drawSidebar(null, true);
     drawButton(layout.resetButton, 'Reset', '#395b72', '#f7f4eb');
@@ -426,39 +562,23 @@ registerSketch('sk2', function (p) {
   }
 
   function drawWashScene(cx, cy, progress) {
-    drawCounterBase(cx, cy, 250);
-    drawChef(cx - 90, cy + 40, 1, 'wash', progress);
+    drawCounterBase(cx, cy, 280);
+    drawChef(cx - 108, cy + 44, 1, 'wash', progress);
 
+    drawSceneImage('sink', cx + 48, cy + 28, 230, 170, 0);
     p.push();
-    p.translate(cx + 42, cy + 42);
+    p.translate(cx + 48, cy + 30);
     p.noStroke();
-    p.fill(197, 211, 221);
-    p.rect(-82, -40, 165, 22, 8);
-    p.fill(152, 169, 182);
-    p.rect(-72, -18, 145, 54, 12);
-    p.fill(99, 185, 222);
-    p.rect(-60, -4, 120, 30, 10);
-    p.fill(214, 236, 245, 180);
-    p.rect(-56, -2, 112, 24, 9);
-
-    p.stroke(125, 143, 157);
-    p.strokeWeight(7);
-    p.noFill();
-    p.arc(-4, -56, 50, 36, p.PI, 0);
-    p.line(21, -56, 33, -56);
-    p.noStroke();
-    p.fill(99, 185, 222, 170);
-    for (let i = 0; i < 6; i += 1) {
-      const wave = p.sin(p.frameCount * 0.08 + i) * 4;
-      p.ellipse(-25 + i * 18, -14 + wave, 10, 16);
-    }
-    drawVegetables(-8, 8, 0.78, true);
+    p.fill(130, 202, 236, 120);
+    p.ellipse(0, 24, 122, 34);
+    drawVegetables(-34, 16, 0.75, true);
+    drawVegetables(18, 20, 0.58, true);
     p.pop();
   }
 
   function drawChopScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
-    drawChef(cx - 95, cy + 38, 1, 'chop', progress);
+    drawChef(cx - 102, cy + 42, 1, 'chop', progress);
 
     p.push();
     p.translate(cx + 48, cy + 38);
@@ -467,76 +587,65 @@ registerSketch('sk2', function (p) {
     p.rect(-88, -10, 175, 82, 12);
     p.fill(156, 96, 62);
     p.rect(-80, -4, 160, 70, 10);
-    drawVegetables(-18, 22, 0.72, false);
-
-    const lift = p.sin(progress * p.TWO_PI * 6) * 14;
-    p.stroke(74, 84, 96);
-    p.strokeWeight(5);
-    p.line(32, -10 - lift, 64, 14 - lift);
-    p.noStroke();
-    p.fill(210);
-    p.quad(64, 14 - lift, 89, 20 - lift, 56, 44 - lift, 38, 28 - lift);
-    p.fill(132, 95, 64);
-    p.rect(18, -18 - lift, 18, 12, 4);
-    for (let i = 0; i < 6; i += 1) {
-      p.fill(88, 170, 84);
-      p.rect(-20 + i * 16, 45 + (i % 2) * 4, 10, 8, 3);
-    }
+    drawVegetables(-16, 22, 0.7, false);
     p.pop();
   }
 
   function drawButterScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    drawStove(cx + 38, cy + 52);
-
-    const melt = p.constrain(progress * 1.2, 0, 1);
-    p.push();
-    p.translate(cx + 36, cy + 46);
-    drawPan(0, 0, 155, 72);
-    p.noStroke();
-    p.fill('#ffe08a');
-    p.ellipse(0, 8, 24 + melt * 34, 18 + melt * 10);
-    p.fill('#fff0a8');
-    p.rect(-16 + melt * 4, -12 + melt * 6, 30 - melt * 14, 24 - melt * 12, 5);
-    drawSteam(0, -16, 3, 0.7 + melt * 0.5);
-    p.pop();
+    if (!drawSceneImage('butterPan', cx + 42, cy + 34, 250, 220, 0)) {
+      drawStove(cx + 38, cy + 52);
+      const melt = p.constrain(progress * 1.2, 0, 1);
+      p.push();
+      p.translate(cx + 36, cy + 46);
+      drawPan(0, 0, 155, 72);
+      p.noStroke();
+      p.fill('#ffe08a');
+      p.ellipse(0, 8, 24 + melt * 34, 18 + melt * 10);
+      p.fill('#fff0a8');
+      p.rect(-16 + melt * 4, -12 + melt * 6, 30 - melt * 14, 24 - melt * 12, 5);
+      drawSteam(0, -16, 3, 0.7 + melt * 0.5);
+      p.pop();
+    }
   }
 
   function drawEggScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    drawStove(cx + 38, cy + 52);
-
-    p.push();
-    p.translate(cx + 36, cy + 46);
-    drawPan(0, 0, 155, 72);
-    p.noStroke();
-    p.fill(255);
-    p.beginShape();
-    p.vertex(-34, 0);
-    p.bezierVertex(-40, -24, 8, -30, 28, -8);
-    p.bezierVertex(54, 2, 34, 30, -4, 28);
-    p.bezierVertex(-30, 30, -48, 14, -34, 0);
-    p.endShape(p.CLOSE);
-    p.fill('#f4c542');
-    p.circle(6, 3, 28 - progress * 2);
-    drawSteam(-8, -18, 4, 0.95);
-    p.pop();
+    if (!drawSceneImage('eggPan', cx + 42, cy + 34, 250, 250, 0)) {
+      drawStove(cx + 38, cy + 52);
+      p.push();
+      p.translate(cx + 36, cy + 46);
+      drawPan(0, 0, 155, 72);
+      p.noStroke();
+      p.fill(255);
+      p.beginShape();
+      p.vertex(-34, 0);
+      p.bezierVertex(-40, -24, 8, -30, 28, -8);
+      p.bezierVertex(54, 2, 34, 30, -4, 28);
+      p.bezierVertex(-30, 30, -48, 14, -34, 0);
+      p.endShape(p.CLOSE);
+      p.fill('#f4c542');
+      p.circle(6, 3, 28 - progress * 2);
+      drawSteam(-8, -18, 4, 0.95);
+      p.pop();
+    }
   }
 
   function drawBaconScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    drawStove(cx + 38, cy + 52);
-
-    p.push();
-    p.translate(cx + 36, cy + 46);
-    drawPan(0, 0, 155, 72);
-    drawBaconStrip(-20, 3, 0.95, progress);
-    drawBaconStrip(18, -3, 0.88, progress + 0.2);
-    drawSteam(0, -20, 4, 1.1);
-    p.pop();
+    if (!drawSceneImage('baconPan', cx + 42, cy + 34, 250, 210, 0)) {
+      drawStove(cx + 38, cy + 52);
+      p.push();
+      p.translate(cx + 36, cy + 46);
+      drawPan(0, 0, 155, 72);
+      drawBaconStrip(-20, 3, 0.95, progress);
+      drawBaconStrip(18, -3, 0.88, progress + 0.2);
+      drawSteam(0, -20, 4, 1.1);
+      p.pop();
+    }
   }
 
   function drawToastScene(cx, cy, progress) {
@@ -564,70 +673,44 @@ registerSketch('sk2', function (p) {
   function drawSpreadScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
     drawChef(cx - 95, cy + 42, 1, 'spread', progress);
+    if (!drawSceneImage('butterToast', cx + 46, cy + 42, 250, 220, 0)) {
+      p.push();
+      p.translate(cx + 44, cy + 46);
+      p.noStroke();
+      p.fill(188, 127, 89);
+      p.rect(-90, -10, 178, 82, 12);
+      drawBreadSlice(-18, 20, 1.05, true);
 
-    p.push();
-    p.translate(cx + 44, cy + 46);
-    p.noStroke();
-    p.fill(188, 127, 89);
-    p.rect(-90, -10, 178, 82, 12);
-    drawBreadSlice(-18, 20, 1.05, true);
-
-    p.fill(255, 233, 162, 220);
-    const butterW = 34 + progress * 34;
-    p.rect(-36, 8, butterW, 14, 7);
-
-    const knifeX = -6 + progress * 72;
-    p.stroke(77, 88, 100);
-    p.strokeWeight(5);
-    p.line(knifeX - 26, 0, knifeX, 20);
-    p.noStroke();
-    p.fill(204);
-    p.quad(knifeX, 20, knifeX + 26, 27, knifeX + 6, 42, knifeX - 8, 28);
-    p.fill(136, 98, 69);
-    p.rect(knifeX - 40, -8, 18, 12, 4);
-    p.pop();
+      p.fill(255, 233, 162, 220);
+      const butterW = 34 + progress * 34;
+      p.rect(-36, 8, butterW, 14, 7);
+      p.pop();
+    }
   }
 
   function drawCoffeeScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
     drawChef(cx - 98, cy + 42, 1, 'coffee', progress);
-
-    p.push();
-    p.translate(cx + 44, cy + 38);
-    p.noStroke();
-    p.fill(70, 79, 92);
-    p.rect(-70, -34, 92, 130, 18);
-    p.fill(99, 112, 128);
-    p.rect(-50, -16, 52, 58, 12);
-    p.fill(220);
-    p.circle(-24, 12, 16);
-
-    drawCoffeeMug(52, 58, 0.88, false);
-
-    const streamH = progress * 84;
-    p.stroke(96, 56, 32);
-    p.strokeWeight(7);
-    p.line(6, 16, 6, 16 + streamH);
-    p.noStroke();
-    drawSteam(52, 30, 3, 0.55 + progress * 0.5);
-    p.pop();
+    if (!drawSceneImage('coffeeCup', cx + 52, cy + 44, 190, 210, 0)) {
+      drawCoffeeMug(cx + 52, cy + 58, 1.05, true);
+    }
   }
 
   function drawPlateScene(cx, cy, progress) {
-    drawCounterBase(cx, cy, 270);
-    drawChef(cx - 102, cy + 44, 1, 'serve', progress);
+    drawCounterBase(cx, cy, 285);
+    if (!drawSceneImage('plateBreakfast', cx + 40, cy + 34, 250, 250, 0)) {
+      p.push();
+      p.translate(cx + 42, cy + 48);
+      p.noStroke();
+      p.fill(243);
+      p.ellipse(0, 0, 170, 124);
+      p.fill(255);
+      p.ellipse(0, -2, 130, 92);
 
-    p.push();
-    p.translate(cx + 42, cy + 48);
-    p.noStroke();
-    p.fill(243);
-    p.ellipse(0, 0, 170, 124);
-    p.fill(255);
-    p.ellipse(0, -2, 130, 92);
-
-    const reveal = p.constrain(progress, 0, 1);
-    drawPlateMeal(0, 0, 122, reveal);
-    p.pop();
+      const reveal = p.constrain(progress, 0, 1);
+      drawPlateMeal(0, 0, 122, reveal);
+      p.pop();
+    }
   }
 
   function drawCounterBase(cx, cy, width) {
@@ -639,6 +722,327 @@ registerSketch('sk2', function (p) {
   }
 
   function drawChef(x, y, scale, pose, progress) {
+    const activeChef = getChefAssetForPose(pose);
+    if (activeChef) {
+      drawChefImage(activeChef, x, y, scale, pose, progress);
+      return;
+    }
+    drawChefFallback(x, y, scale, pose, progress);
+  }
+
+  function getChefAssetForPose(pose) {
+    if (isCupPose(pose) && chefCupReady && chefCupSprite) {
+      return chefCupSprite;
+    }
+    if (isKnifePose(pose) && chefKnifeReady && chefKnifeSprite) {
+      return chefKnifeSprite;
+    }
+    if (isSpatulaPose(pose) && chefSpatulaReady && chefSpatulaSprite) {
+      return chefSpatulaSprite;
+    }
+    if (chefSpriteReady && chefSprite) {
+      return chefSprite;
+    }
+    return null;
+  }
+
+  function isSpatulaPose(pose) {
+    return pose === 'pan' || pose === 'toast';
+  }
+
+  function isKnifePose(pose) {
+    return pose === 'chop';
+  }
+
+  function isCupPose(pose) {
+    return pose === 'coffee';
+  }
+
+  function drawChefImage(sprite, x, y, scale, pose, progress) {
+    const motion = getChefMotion(pose, progress);
+    const shadowW = motion.shadowW * scale;
+    const shadowH = motion.shadowH * scale;
+
+    p.push();
+    p.translate(x + motion.x, y + motion.y);
+    p.rotate(motion.angle * 0.35);
+
+    p.noStroke();
+    p.fill(44, 57, 76, 30);
+    p.ellipse(0, 136, shadowW, shadowH);
+
+    drawSpriteCentered(sprite, motion.spriteX, motion.spriteY, motion.spriteScale * scale);
+    p.pop();
+  }
+
+  function getChefMotion(pose, progress) {
+    const pulse = p.sin(p.frameCount * 0.08 + progress * p.TWO_PI * 2);
+    const fast = p.sin(p.frameCount * 0.18 + progress * p.TWO_PI * 6);
+    const hop = Math.abs(p.sin(p.frameCount * 0.12 + progress * p.TWO_PI * 2));
+    const motion = {
+      x: pulse * 5,
+      y: -hop * 4 - Math.abs(fast) * 1.5,
+      angle: pulse * 0.035,
+      spriteScale: 0.68,
+      spriteX: 0,
+      spriteY: 18,
+      shadowW: 82,
+      shadowH: 18,
+    };
+
+    if (isSpatulaPose(pose)) {
+      motion.spriteScale = 0.68;
+      motion.spriteY = 12;
+      motion.shadowW = 82;
+      motion.shadowH = 18;
+      motion.x = pulse * 4;
+      motion.y = -hop * 3;
+      motion.angle = pulse * 0.02;
+    }
+
+    if (isKnifePose(pose)) {
+      motion.spriteScale = 0.52;
+      motion.spriteY = 10;
+      motion.shadowW = 82;
+      motion.shadowH = 18;
+      motion.x = pulse * 3;
+      motion.y = -hop * 2.5;
+      motion.angle = pulse * 0.018;
+    }
+
+    if (isCupPose(pose)) {
+      motion.spriteScale = 0.68;
+      motion.spriteY = 12;
+      motion.shadowW = 82;
+      motion.shadowH = 18;
+      motion.x = pulse * 3;
+      motion.y = -hop * 2.5;
+      motion.angle = pulse * 0.015;
+    }
+
+    return motion;
+  }
+
+  function prepareVegetableSprites(img) {
+    vegetableSprites.pumpkin = makeSpriteFromSheet(
+      img,
+      { x: 0.02, y: 0.05, w: 0.23, h: 0.33 },
+      28
+    );
+    vegetableSprites.broccoli = makeSpriteFromSheet(
+      img,
+      { x: 0.30, y: 0.02, w: 0.27, h: 0.40 },
+      28
+    );
+    vegetableSprites.tomato = makeSpriteFromSheet(
+      img,
+      { x: 0.68, y: 0.04, w: 0.22, h: 0.33 },
+      28
+    );
+    vegetableSprites.eggplant = makeSpriteFromSheet(
+      img,
+      { x: 0.23, y: 0.39, w: 0.22, h: 0.54 },
+      28
+    );
+    vegetableSprites.carrot = makeSpriteFromSheet(
+      img,
+      { x: 0.46, y: 0.39, w: 0.18, h: 0.54 },
+      28
+    );
+    vegetableSprites.cucumber = makeSpriteFromSheet(
+      img,
+      { x: 0.72, y: 0.37, w: 0.18, h: 0.55 },
+      28
+    );
+  }
+
+  function loadSceneAsset(key, path, options) {
+    p.loadImage(
+      path,
+      function (img) {
+        sceneImages[key] = prepareStandaloneImage(img, options || {});
+      },
+      function (err) {
+        console.warn('Scene image failed to load for ' + key + ':', err);
+      }
+    );
+  }
+
+  function prepareStandaloneImage(img, options) {
+    const cfg = options || {};
+    let prepared = img;
+    if (cfg.crop) {
+      const c = cfg.crop;
+      const sx = Math.floor(prepared.width * c.x);
+      const sy = Math.floor(prepared.height * c.y);
+      const sw = Math.floor(prepared.width * c.w);
+      const sh = Math.floor(prepared.height * c.h);
+      prepared = prepared.get(sx, sy, sw, sh);
+    } else {
+      prepared = prepared.get();
+    }
+    if (typeof cfg.tolerance === 'number') {
+      removeFlatBackground(prepared, cfg.tolerance);
+      prepared = trimTransparent(prepared, 3);
+    }
+    return prepared;
+  }
+
+  function makeSpriteFromSheet(source, rect, tolerance) {
+    const sx = Math.floor(source.width * rect.x);
+    const sy = Math.floor(source.height * rect.y);
+    const sw = Math.floor(source.width * rect.w);
+    const sh = Math.floor(source.height * rect.h);
+    const sprite = source.get(sx, sy, sw, sh);
+    removeFlatBackground(sprite, tolerance);
+    return trimTransparent(sprite, 4);
+  }
+
+  function removeFlatBackground(img, tolerance) {
+    img.loadPixels();
+    const refs = sampleEdgeReferenceColors(img);
+    const width = img.width;
+    const height = img.height;
+    const visited = new Uint8Array(width * height);
+    const queue = [];
+
+    function enqueue(x, y) {
+      if (x < 0 || y < 0 || x >= width || y >= height) return;
+      const index = y * width + x;
+      if (visited[index]) return;
+      visited[index] = 1;
+      queue.push(index);
+    }
+
+    for (let x = 0; x < width; x += 1) {
+      enqueue(x, 0);
+      enqueue(x, height - 1);
+    }
+    for (let y = 1; y < height - 1; y += 1) {
+      enqueue(0, y);
+      enqueue(width - 1, y);
+    }
+
+    while (queue.length > 0) {
+      const index = queue.pop();
+      const x = index % width;
+      const y = Math.floor(index / width);
+      const pixelIndex = index * 4;
+      if (img.pixels[pixelIndex + 3] === 0) continue;
+      if (!matchesBackgroundRefs(img, pixelIndex, refs, tolerance)) continue;
+
+      img.pixels[pixelIndex + 3] = 0;
+      enqueue(x + 1, y);
+      enqueue(x - 1, y);
+      enqueue(x, y + 1);
+      enqueue(x, y - 1);
+    }
+    img.updatePixels();
+  }
+
+  function sampleEdgeReferenceColors(img) {
+    const refs = [];
+    const width = img.width;
+    const height = img.height;
+    const stepX = Math.max(1, Math.floor(width / 6));
+    const stepY = Math.max(1, Math.floor(height / 6));
+
+    function addSample(x, y) {
+      const idx = (y * width + x) * 4;
+      refs.push({
+        r: img.pixels[idx],
+        g: img.pixels[idx + 1],
+        b: img.pixels[idx + 2],
+      });
+    }
+
+    for (let x = 0; x < width; x += stepX) {
+      addSample(x, 0);
+      addSample(x, height - 1);
+    }
+    for (let y = 0; y < height; y += stepY) {
+      addSample(0, y);
+      addSample(width - 1, y);
+    }
+
+    addSample(0, 0);
+    addSample(width - 1, 0);
+    addSample(0, height - 1);
+    addSample(width - 1, height - 1);
+    return refs;
+  }
+
+  function matchesBackgroundRefs(img, pixelIndex, refs, tolerance) {
+    const r = img.pixels[pixelIndex];
+    const g = img.pixels[pixelIndex + 1];
+    const b = img.pixels[pixelIndex + 2];
+
+    for (let i = 0; i < refs.length; i += 1) {
+      const ref = refs[i];
+      if (
+        Math.abs(r - ref.r) <= tolerance &&
+        Math.abs(g - ref.g) <= tolerance &&
+        Math.abs(b - ref.b) <= tolerance
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function trimTransparent(img, padding) {
+    img.loadPixels();
+    let minX = img.width;
+    let minY = img.height;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < img.height; y += 1) {
+      for (let x = 0; x < img.width; x += 1) {
+        const idx = (y * img.width + x) * 4 + 3;
+        if (img.pixels[idx] > 0) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX < minX || maxY < minY) {
+      return img;
+    }
+
+    const left = Math.max(0, minX - padding);
+    const top = Math.max(0, minY - padding);
+    const right = Math.min(img.width - 1, maxX + padding);
+    const bottom = Math.min(img.height - 1, maxY + padding);
+    return img.get(left, top, right - left + 1, bottom - top + 1);
+  }
+
+  function drawSpriteCentered(sprite, x, y, scale) {
+    const w = sprite.width * scale;
+    const h = sprite.height * scale;
+    p.image(sprite, x - w / 2, y - h / 2, w, h);
+  }
+
+  function drawSceneImage(key, x, y, maxW, maxH, angle) {
+    const sprite = sceneImages[key];
+    if (!sprite) return false;
+
+    const scale = p.min(maxW / sprite.width, maxH / sprite.height);
+    const w = sprite.width * scale;
+    const h = sprite.height * scale;
+
+    p.push();
+    p.translate(x, y);
+    p.rotate(angle || 0);
+    p.image(sprite, -w / 2, -h / 2, w, h);
+    p.pop();
+    return true;
+  }
+
+  function drawChefFallback(x, y, scale, pose, progress) {
     p.push();
     p.translate(x, y);
     p.scale(scale);
@@ -743,6 +1147,48 @@ registerSketch('sk2', function (p) {
   }
 
   function drawVegetables(x, y, scale, wet) {
+    if (vegetableSpriteReady) {
+      drawVegetableSprites(x, y, scale, wet);
+      return;
+    }
+    drawVegetablesFallback(x, y, scale, wet);
+  }
+
+  function drawVegetableSprites(x, y, scale, wet) {
+    const wiggle = p.sin(p.frameCount * 0.06) * 2;
+    const sprites = wet
+      ? [
+        { key: 'broccoli', x: -18, y: -2 + wiggle, s: 0.44 },
+        { key: 'tomato', x: 26, y: 4 - wiggle * 0.7, s: 0.36 },
+        { key: 'cucumber', x: 56, y: 10 + wiggle * 0.4, s: 0.34 },
+      ]
+      : [
+        { key: 'eggplant', x: -10, y: 14 + wiggle * 0.5, s: 0.38 },
+        { key: 'carrot', x: 34, y: 2 - wiggle, s: 0.35 },
+        { key: 'tomato', x: 64, y: -2 + wiggle * 0.6, s: 0.3 },
+      ];
+
+    p.push();
+    p.translate(x, y);
+    p.scale(scale);
+    for (let i = 0; i < sprites.length; i += 1) {
+      const item = sprites[i];
+      const sprite = vegetableSprites[item.key];
+      if (sprite) {
+        drawSpriteCentered(sprite, item.x, item.y, item.s);
+      }
+    }
+    if (wet) {
+      p.noStroke();
+      p.fill(180, 227, 245, 160);
+      for (let i = 0; i < 5; i += 1) {
+        p.circle(-30 + i * 16, 28 + (i % 2) * 6, 7);
+      }
+    }
+    p.pop();
+  }
+
+  function drawVegetablesFallback(x, y, scale, wet) {
     p.push();
     p.translate(x, y);
     p.scale(scale);
