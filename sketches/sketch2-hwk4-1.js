@@ -16,7 +16,7 @@ registerSketch('sk2', function (p) {
   const TOASTER_PATH = 'images/step6-toaster.png';
   const COFFEE_CUP_PATH = 'images/step8-coffee-cup.png';
   const FULL_BREAKFAST_PATH = 'images/step10-full-breakfast.png';
-  const selectorValues = [60, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+  const selectorValues = [60].concat(Array.from({ length: 59 }, function (_, i) { return i + 1; }));
   const steps = [
     { label: 'Wash vegetables', short: 'Wash vegetables', detail: 'Chef rinses the vegetables at the sink.', weight: 13, accent: '#79b8f3' },
     { label: 'Cut vegetables', short: 'Cut vegetables', detail: 'Chef chops the vegetables on the board.', weight: 12, accent: '#7bd389' },
@@ -266,7 +266,7 @@ registerSketch('sk2', function (p) {
     p.textAlign(p.LEFT, p.TOP);
     p.fill(70, 87, 110);
     p.textSize(16);
-    p.text('1. Choose the total cook time on the clock.\n2. Press Start Cooking to begin.', 45, 48, 390, 54);
+    p.text('1. Choose the total cook time on the clock in 1-minute steps.\n2. Press Start Cooking to begin.', 45, 48, 390, 54);
 
     drawSelectorClock();
     drawPreviewPanel();
@@ -288,26 +288,29 @@ registerSketch('sk2', function (p) {
     p.noFill();
     p.circle(cx, cy, layout.selector.rOuter * 2);
 
-    for (let i = 0; i < 12; i += 1) {
-      const angle = -p.HALF_PI + i * (p.TWO_PI / 12);
+    for (let i = 0; i < selectorValues.length; i += 1) {
+      const angle = -p.HALF_PI + i * (p.TWO_PI / selectorValues.length);
       const value = selectorValues[i];
       const outerX = cx + p.cos(angle) * (layout.selector.rOuter - 10);
       const outerY = cy + p.sin(angle) * (layout.selector.rOuter - 10);
-      const innerX = cx + p.cos(angle) * (layout.selector.rOuter - 28);
-      const innerY = cy + p.sin(angle) * (layout.selector.rOuter - 28);
+      const isMajor = value === 60 || value % 5 === 0;
+      const innerX = cx + p.cos(angle) * (layout.selector.rOuter - (isMajor ? 28 : 20));
+      const innerY = cy + p.sin(angle) * (layout.selector.rOuter - (isMajor ? 28 : 20));
       const labelX = cx + p.cos(angle) * (layout.selector.rOuter - 50);
       const labelY = cy + p.sin(angle) * (layout.selector.rOuter - 50);
       const isSelected = value === selectedMinutes;
 
       p.stroke(isSelected ? p.color('#d96c4f') : p.color(150, 122, 95));
-      p.strokeWeight(isSelected ? 4 : 2);
+      p.strokeWeight(isSelected ? 4 : isMajor ? 2 : 1);
       p.line(innerX, innerY, outerX, outerY);
 
-      p.noStroke();
-      p.fill(isSelected ? '#d96c4f' : '#8f7258');
-      p.textAlign(p.CENTER, p.CENTER);
-      p.textSize(isSelected ? 17 : 14);
-      p.text(value, labelX, labelY);
+      if (isSelected || isMajor || value === 1) {
+        p.noStroke();
+        p.fill(isSelected ? '#d96c4f' : '#8f7258');
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(isSelected ? 16 : 11);
+        p.text(value, labelX, labelY);
+      }
     }
 
     const handAngle = selectorAngleForMinutes(selectedMinutes);
@@ -451,7 +454,7 @@ registerSketch('sk2', function (p) {
     p.fill(44, 57, 76);
     p.textAlign(p.CENTER, p.CENTER);
     p.textSize(14);
-    p.text(formatClock(remainingSeconds), cx, cy + radius + 20);
+    p.text(formatClock(remainingSeconds, phase === 'cooking'), cx, cy + radius + 20);
   }
 
   function drawScenePanel(step, state) {
@@ -500,10 +503,10 @@ registerSketch('sk2', function (p) {
     p.fill(44, 57, 76);
     p.textAlign(p.LEFT, p.TOP);
     p.textSize(18);
-    p.text('Current step left: ' + formatClock(state.currentStepRemaining), layout.scene.x + 20, 680);
+    p.text('Current step left: ' + formatClock(state.currentStepRemaining, true), layout.scene.x + 20, 680);
     p.fill(96, 112, 130);
     p.textSize(14);
-    p.text('Total time left: ' + formatClock(state.remainingTotal), layout.scene.x + 20, 710);
+    p.text('Total time left: ' + formatClock(state.remainingTotal, true), layout.scene.x + 20, 710);
   }
 
   function drawSidebar(state, allDone) {
@@ -542,7 +545,7 @@ registerSketch('sk2', function (p) {
 
       p.fill(isDone ? '#50745f' : isCurrent ? '#c15f46' : '#7f8c99');
       p.textSize(12);
-      const label = isDone ? 'done' : formatClock(getStepRemaining(i, state, allDone));
+      const label = isDone ? 'done' : formatClock(getStepRemaining(i, state, allDone), isCurrent && !allDone);
       p.text(label, layout.sidebar.x + 34, rowY + 23);
 
       const barX = layout.sidebar.x + 114;
@@ -804,10 +807,10 @@ registerSketch('sk2', function (p) {
     }
 
     if (isKnifePose(pose)) {
-      motion.spriteScale = 0.56;
+      motion.spriteScale = 0.48;
       motion.spriteY = 10;
-      motion.shadowW = 68;
-      motion.shadowH = 16;
+      motion.shadowW = 60;
+      motion.shadowH = 15;
       motion.x = pulse * 3;
       motion.y = -hop * 2.5;
       motion.angle = pulse * 0.018;
@@ -1401,13 +1404,13 @@ registerSketch('sk2', function (p) {
 
     let angle = p.atan2(dy, dx) + p.HALF_PI;
     if (angle < 0) angle += p.TWO_PI;
-    const slot = Math.round(angle / (p.TWO_PI / 12)) % 12;
+    const slot = Math.round(angle / (p.TWO_PI / selectorValues.length)) % selectorValues.length;
     return selectorValues[slot];
   }
 
   function selectorAngleForMinutes(minutes) {
     const slot = selectorValues.indexOf(minutes);
-    return -p.HALF_PI + slot * (p.TWO_PI / 12);
+    return -p.HALF_PI + slot * (p.TWO_PI / selectorValues.length);
   }
 
   function getTimelineState() {
@@ -1461,11 +1464,21 @@ registerSketch('sk2', function (p) {
     return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h;
   }
 
-  function formatClock(seconds) {
-    const safe = p.max(0, Math.ceil(seconds));
-    const mins = Math.floor(safe / 60);
-    const secs = safe % 60;
-    return p.nf(mins, 2) + ':' + p.nf(secs, 2);
+  function formatClock(seconds, includeMilliseconds) {
+    const safe = p.max(0, seconds);
+    const wholeSeconds = Math.floor(safe);
+    const mins = Math.floor(wholeSeconds / 60);
+    const secs = wholeSeconds % 60;
+
+    if (!includeMilliseconds) {
+      const rounded = Math.ceil(safe);
+      const roundedMins = Math.floor(rounded / 60);
+      const roundedSecs = rounded % 60;
+      return p.nf(roundedMins, 2) + ':' + p.nf(roundedSecs, 2);
+    }
+
+    const milliseconds = Math.floor((safe - wholeSeconds) * 1000);
+    return p.nf(mins, 2) + ':' + p.nf(secs, 2) + '.' + p.nf(milliseconds, 3);
   }
 
   function getCurrentTimeLabel() {
