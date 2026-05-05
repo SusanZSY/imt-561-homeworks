@@ -16,6 +16,7 @@ registerSketch('sk2', function (p) {
   const TOASTER_PATH = 'images/step6-toaster.png';
   const COFFEE_CUP_PATH = 'images/step8-coffee-cup.png';
   const FULL_BREAKFAST_PATH = 'images/step10-full-breakfast.png';
+  const SCENE_ITEM_Y_SHIFT = -28;
   const selectorValues = [60].concat(Array.from({ length: 59 }, function (_, i) { return i + 1; }));
   const steps = [
     { label: 'Wash vegetables', short: 'Wash vegetables', detail: 'Chef rinses the vegetables at the sink.', weight: 13, accent: '#79b8f3' },
@@ -123,7 +124,7 @@ registerSketch('sk2', function (p) {
     loadSceneAsset('prepVegetables', PREP_VEGETABLES_PATH, {});
     loadSceneAsset('sink', SINK_PATH, { tolerance: 36 });
     loadSceneAsset('butterPan', BUTTER_PAN_PATH, { tolerance: 42, crop: { x: 0.02, y: 0.0, w: 0.96, h: 0.84 } });
-    loadSceneAsset('baconPan', BACON_PAN_PATH, { tolerance: 52, crop: { x: 0.02, y: 0.02, w: 0.88, h: 0.74 } });
+    loadSceneAsset('baconPan', BACON_PAN_PATH, {});
     loadSceneAsset('plateBreakfast', PLATE_BREAKFAST_PATH, { tolerance: 34 });
     loadSceneAsset('toaster', TOASTER_PATH, {});
     loadSceneAsset('butterToast', BUTTER_TOAST_PATH, { tolerance: 46 });
@@ -266,7 +267,7 @@ registerSketch('sk2', function (p) {
     p.textAlign(p.LEFT, p.TOP);
     p.fill(70, 87, 110);
     p.textSize(16);
-    p.text('1. Choose the total cook time on the clock in 1-minute steps.\n2. Press Start Cooking to begin.', 45, 48, 390, 54);
+    p.text('1. Click the clock to choose the total cooking time.\n2. Press Start Cooking to watch the chef move through each breakfast step.', 45, 48, 390, 54);
 
     drawSelectorClock();
     drawPreviewPanel();
@@ -389,26 +390,27 @@ registerSketch('sk2', function (p) {
 
   function drawDoneScreen() {
     drawTopHeader(0, 'Breakfast served');
+    const doneContentX = 315;
 
     p.noStroke();
     p.fill(255, 248, 240, 225);
     p.rect(50, 155, 700, 545, 28);
+    drawSparkles();
 
     p.fill(44, 57, 76);
     p.textAlign(p.CENTER, p.TOP);
     p.textSize(34);
-    p.text('All done!', p.width / 2, 182);
+    p.text('All done!', doneContentX, 182);
 
     p.fill(100, 112, 126);
     p.textSize(17);
-    p.text('Breakfast is ready.\nCoffee is on the table.', p.width / 2, 225);
+    p.text('Breakfast is ready.\nCoffee is on the table.', doneContentX, 225);
 
     drawTableScene();
-    if (!drawSceneImage('fullBreakfast', 400, 490, 470, 290, 0)) {
-      drawPlateMeal(370, 515, 220, 1);
-      drawCoffeeMug(575, 500, 1.1, true);
+    if (!drawSceneImage('fullBreakfast', 305, 490 + SCENE_ITEM_Y_SHIFT, 380, 255, 0)) {
+      drawPlateMeal(300, 515 + SCENE_ITEM_Y_SHIFT, 220, 1);
+      drawCoffeeMug(480, 500 + SCENE_ITEM_Y_SHIFT, 1.1, true);
     }
-    drawSparkles();
     drawSidebar(null, true);
     drawButton(layout.resetButton, 'Reset', '#395b72', '#f7f4eb');
   }
@@ -564,9 +566,9 @@ registerSketch('sk2', function (p) {
     drawCounterBase(cx, cy, 280);
     drawChef(cx - 108, cy + 44, 1, 'wash', progress);
 
-    drawSceneImage('sink', cx + 48, cy + 28, 230, 170, 0);
+    drawSceneImage('sink', cx + 48, cy + 28 + SCENE_ITEM_Y_SHIFT, 230, 170, 0);
     p.push();
-    p.translate(cx + 48, cy + 30);
+    p.translate(cx + 48, cy + 30 + SCENE_ITEM_Y_SHIFT);
     p.noStroke();
     p.fill(130, 202, 236, 120);
     p.ellipse(0, 24, 122, 34);
@@ -581,7 +583,7 @@ registerSketch('sk2', function (p) {
     drawCounterBase(cx, cy, 255);
 
     p.push();
-    p.translate(cx + 48, cy + 38);
+    p.translate(cx + 48, cy + 38 + SCENE_ITEM_Y_SHIFT);
     p.noStroke();
     p.fill(182, 124, 86);
     p.rect(-88, -10, 175, 82, 12);
@@ -592,18 +594,17 @@ registerSketch('sk2', function (p) {
     }
     p.pop();
 
-    // Keep the knife chef in the foreground so the pose reads clearly.
     drawChef(cx - 102, cy + 42, 1, 'chop', progress);
   }
 
   function drawButterScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    if (!drawSceneImage('butterPan', cx + 42, cy + 22, 250, 220, 0)) {
+    if (!drawSceneImage('butterPan', cx + 42, cy + 22 + SCENE_ITEM_Y_SHIFT, 250, 220, 0)) {
       drawStove(cx + 38, cy + 52);
       const melt = p.constrain(progress * 1.2, 0, 1);
       p.push();
-      p.translate(cx + 36, cy + 46);
+      p.translate(cx + 36, cy + 46 + SCENE_ITEM_Y_SHIFT);
       drawPan(0, 0, 155, 72);
       p.noStroke();
       p.fill('#ffe08a');
@@ -618,10 +619,10 @@ registerSketch('sk2', function (p) {
   function drawEggScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    if (!drawSceneImage('eggPan', cx + 42, cy + 22, 250, 250, 0)) {
+    if (!drawSceneImage('eggPan', cx + 42, cy + 22 + SCENE_ITEM_Y_SHIFT, 250, 250, 0)) {
       drawStove(cx + 38, cy + 52);
       p.push();
-      p.translate(cx + 36, cy + 46);
+      p.translate(cx + 36, cy + 46 + SCENE_ITEM_Y_SHIFT);
       drawPan(0, 0, 155, 72);
       p.noStroke();
       p.fill(255);
@@ -641,10 +642,10 @@ registerSketch('sk2', function (p) {
   function drawBaconScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    if (!drawSceneImage('baconPan', cx + 42, cy + 22, 250, 210, 0)) {
+    if (!drawSceneImage('baconPan', cx + 42, cy - 2 + SCENE_ITEM_Y_SHIFT, 250, 210, 0)) {
       drawStove(cx + 38, cy + 52);
       p.push();
-      p.translate(cx + 36, cy + 46);
+      p.translate(cx + 36, cy + 22 + SCENE_ITEM_Y_SHIFT);
       drawPan(0, 0, 155, 72);
       drawBaconStrip(-20, 3, 0.95, progress);
       drawBaconStrip(18, -3, 0.88, progress + 0.2);
@@ -656,9 +657,9 @@ registerSketch('sk2', function (p) {
   function drawToastScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
     drawChef(cx - 95, cy + 44, 1, 'toast', progress);
-    if (!drawSceneImage('toaster', cx + 42, cy + 26, 250, 210, 0)) {
+    if (!drawSceneImage('toaster', cx + 42, cy + 26 + SCENE_ITEM_Y_SHIFT, 250, 210, 0)) {
       p.push();
-      p.translate(cx + 38, cy + 50);
+      p.translate(cx + 38, cy + 50 + SCENE_ITEM_Y_SHIFT);
       p.noStroke();
       p.fill(184, 70, 57);
       p.rect(-62, 0, 122, 76, 24);
@@ -679,9 +680,9 @@ registerSketch('sk2', function (p) {
   function drawSpreadScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
     drawChef(cx - 95, cy + 42, 1, 'spread', progress);
-    if (!drawSceneImage('butterToast', cx + 46, cy + 30, 250, 220, 0)) {
+    if (!drawSceneImage('butterToast', cx + 46, cy + 30 + SCENE_ITEM_Y_SHIFT, 250, 220, 0)) {
       p.push();
-      p.translate(cx + 44, cy + 46);
+      p.translate(cx + 44, cy + 46 + SCENE_ITEM_Y_SHIFT);
       p.noStroke();
       p.fill(188, 127, 89);
       p.rect(-90, -10, 178, 82, 12);
@@ -696,17 +697,14 @@ registerSketch('sk2', function (p) {
 
   function drawCoffeeScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
-    drawChef(cx - 98, cy + 42, 1, 'coffee', progress);
-    if (!drawSceneImage('coffeeCup', cx + 52, cy + 32, 190, 210, 0)) {
-      drawCoffeeMug(cx + 52, cy + 58, 1.05, true);
-    }
+    drawChef(cx, cy - 4, 0.84, 'coffee', progress);
   }
 
   function drawPlateScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 285);
-    if (!drawSceneImage('plateBreakfast', cx + 40, cy + 22, 250, 250, 0)) {
+    if (!drawSceneImage('plateBreakfast', cx, cy + 22 + SCENE_ITEM_Y_SHIFT, 250, 250, 0)) {
       p.push();
-      p.translate(cx + 42, cy + 48);
+      p.translate(cx, cy + 48 + SCENE_ITEM_Y_SHIFT);
       p.noStroke();
       p.fill(243);
       p.ellipse(0, 0, 170, 124);
@@ -789,38 +787,38 @@ registerSketch('sk2', function (p) {
       x: pulse * 5,
       y: -hop * 4 - Math.abs(fast) * 1.5,
       angle: pulse * 0.035,
-      spriteScale: 0.56,
+      spriteScale: 0.38,
       spriteX: 0,
       spriteY: 12,
-      shadowW: 68,
-      shadowH: 16,
+      shadowW: 50,
+      shadowH: 13,
     };
 
     if (isSpatulaPose(pose)) {
-      motion.spriteScale = 0.56;
+      motion.spriteScale = 0.70;
       motion.spriteY = 10;
-      motion.shadowW = 68;
-      motion.shadowH = 16;
+      motion.shadowW = 78;
+      motion.shadowH = 18;
       motion.x = pulse * 4;
       motion.y = -hop * 3;
       motion.angle = pulse * 0.02;
     }
 
     if (isKnifePose(pose)) {
-      motion.spriteScale = 0.48;
+      motion.spriteScale = 0.30;
       motion.spriteY = 10;
-      motion.shadowW = 60;
-      motion.shadowH = 15;
+      motion.shadowW = 42;
+      motion.shadowH = 12;
       motion.x = pulse * 3;
       motion.y = -hop * 2.5;
       motion.angle = pulse * 0.018;
     }
 
     if (isCupPose(pose)) {
-      motion.spriteScale = 0.48;
+      motion.spriteScale = 0.40;
       motion.spriteY = 10;
-      motion.shadowW = 60;
-      motion.shadowH = 15;
+      motion.shadowW = 50;
+      motion.shadowH = 13;
       motion.x = pulse * 3;
       motion.y = -hop * 2.5;
       motion.angle = pulse * 0.015;
