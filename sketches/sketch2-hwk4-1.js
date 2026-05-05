@@ -19,15 +19,15 @@ registerSketch('sk2', function (p) {
   const SCENE_ITEM_Y_SHIFT = -28;
   const selectorValues = [60].concat(Array.from({ length: 59 }, function (_, i) { return i + 1; }));
   const steps = [
-    { label: 'Wash vegetables', short: 'Wash vegetables', detail: 'Chef rinses the vegetables at the sink.', weight: 13, accent: '#79b8f3' },
-    { label: 'Cut vegetables', short: 'Cut vegetables', detail: 'Chef chops the vegetables on the board.', weight: 12, accent: '#7bd389' },
-    { label: 'Melt butter in pan', short: 'Melt butter', detail: 'Butter softens and melts in the warm pan.', weight: 8, accent: '#ffd166' },
-    { label: 'Fry egg in pan', short: 'Fry egg', detail: 'The egg sizzles while the yolk stays bright.', weight: 14, accent: '#f6bd60' },
-    { label: 'Fry bacon in pan', short: 'Fry bacon', detail: 'Bacon crisps up beside the chef.', weight: 13, accent: '#f28482' },
-    { label: 'Toast the bread', short: 'Toast bread', detail: 'Bread pops up from the toaster.', weight: 11, accent: '#d4a373' },
-    { label: 'Spread butter on bread', short: 'Butter bread', detail: 'Chef smooths butter across the toast.', weight: 8, accent: '#f7d794' },
-    { label: 'Pour a cup of coffee', short: 'Pour coffee', detail: 'Coffee streams into the mug.', weight: 9, accent: '#8d6e63' },
-    { label: 'Plate the breakfast', short: 'Plate dish', detail: 'Toast, vegetables, egg, and bacon come together.', weight: 12, accent: '#84a59d' },
+    { label: 'Wash vegetables', short: 'Wash vegetables', detail: 'Chef is washing vegetables.', weight: 13, accent: '#79b8f3' },
+    { label: 'Cut vegetables', short: 'Cut vegetables', detail: 'Chef is cutting vegetables.', weight: 12, accent: '#7bd389' },
+    { label: 'Melt butter in pan', short: 'Melt butter', detail: 'Chef is buttering the pan.', weight: 8, accent: '#ffd166' },
+    { label: 'Fry egg in pan', short: 'Fry egg', detail: 'Chef is frying an egg.', weight: 14, accent: '#f6bd60' },
+    { label: 'Fry bacon in pan', short: 'Fry bacon', detail: 'Chef is frying bacon.', weight: 13, accent: '#f28482' },
+    { label: 'Toast the bread', short: 'Toast bread', detail: 'Chef is making toast.', weight: 11, accent: '#d4a373' },
+    { label: 'Spread butter on bread', short: 'Butter bread', detail: 'Chef is buttering toast.', weight: 8, accent: '#f7d794' },
+    { label: 'Pour a cup of coffee', short: 'Pour coffee', detail: 'Chef is pouring coffee.', weight: 9, accent: '#8d6e63' },
+    { label: 'Plate the breakfast', short: 'Plate dish', detail: 'Chef is plating breakfast.', weight: 12, accent: '#84a59d' },
   ];
 
   let selectedMinutes = 25;
