@@ -1,16 +1,22 @@
 // Instance-mode sketch for tab 3
 registerSketch('sk3', function (p) {
   const CANVAS_SIZE = 800;
-  const EGG_STAGE_REF_PATH = 'images/egg-boil-stages.jpg';
-  const TIMER_STEP_SECONDS = 15;
-  const MIN_TIMER_SECONDS = 15;
+  const EGG_STAGE_PATHS = [
+    'images/egg-stage-1.png',
+    'images/egg-stage-2.png',
+    'images/egg-stage-3.png',
+    'images/egg-stage-4.png',
+    'images/egg-stage-5.png',
+  ];
+  const TIMER_STEP_SECONDS = 30;
+  const MIN_TIMER_SECONDS = 30;
   const MAX_TIMER_SECONDS = 10 * 60;
   const eggStages = [
     {
       title: 'Runny White + Yolk',
       short: 'Runny',
       detail: 'White is opaque but still loose. Yolk is fully runny.',
-      seconds: 35,
+      seconds: 2 * 60,
       whiteSet: 0.22,
       whiteSpread: 1.28,
       whiteOpacity: 218,
@@ -23,7 +29,7 @@ registerSketch('sk3', function (p) {
       title: 'Set White, Runny Yolk',
       short: 'Soft Center',
       detail: 'White is set. Yolk is still loose and glossy inside.',
-      seconds: 70,
+      seconds: 4 * 60,
       whiteSet: 0.56,
       whiteSpread: 1.16,
       whiteOpacity: 238,
@@ -36,7 +42,7 @@ registerSketch('sk3', function (p) {
       title: 'Set White, Yolk Starting To Set',
       short: 'Jammy',
       detail: 'White is set. Yolk is thickening and just starting to set.',
-      seconds: 105,
+      seconds: 6 * 60,
       whiteSet: 0.74,
       whiteSpread: 1.08,
       whiteOpacity: 246,
@@ -49,7 +55,7 @@ registerSketch('sk3', function (p) {
       title: 'Set White, Set Yolk With Orange Center',
       short: 'Set Center',
       detail: 'White is set. Yolk is set with a soft orange middle.',
-      seconds: 140,
+      seconds: 8 * 60,
       whiteSet: 0.88,
       whiteSpread: 1.02,
       whiteOpacity: 252,
@@ -62,7 +68,7 @@ registerSketch('sk3', function (p) {
       title: 'Firm Yellow Yolk',
       short: 'Firm',
       detail: 'White is set. Yolk is fully yellow and firm all the way through.',
-      seconds: 175,
+      seconds: 10 * 60,
       whiteSet: 0.97,
       whiteSpread: 0.98,
       whiteOpacity: 255,
@@ -78,7 +84,6 @@ registerSketch('sk3', function (p) {
   let phase = 'select';
   let startedAt = 0;
   let lastError = null;
-  let eggStageSheet = null;
   let eggStageSprites = [];
   let eggStageSpritesReady = false;
 
@@ -87,22 +92,28 @@ registerSketch('sk3', function (p) {
     rightPanel: { x: 470, y: 120, w: 300, h: 620 },
     startButton: { x: 535, y: 690, w: 170, h: 52 },
     resetButton: { x: 555, y: 690, w: 150, h: 46 },
-    durationMinus: { x: 505, y: 560, w: 52, h: 42 },
-    durationPlus: { x: 683, y: 560, w: 52, h: 42 },
+    durationMinus: { x: 506, y: 560, w: 52, h: 42 },
+    durationPlus: { x: 682, y: 560, w: 52, h: 42 },
   };
 
   p.preload = function () {
-    eggStageSheet = p.loadImage(
-      EGG_STAGE_REF_PATH,
-      function (img) {
-        prepareEggStageSprites(img);
-        eggStageSpritesReady = eggStageSprites.length === eggStages.length;
-      },
-      function (err) {
-        eggStageSpritesReady = false;
-        console.warn('Egg stage reference image failed to load:', err);
-      }
-    );
+    eggStageSprites = new Array(EGG_STAGE_PATHS.length);
+    let loadedCount = 0;
+
+    EGG_STAGE_PATHS.forEach(function (path, index) {
+      p.loadImage(
+        path,
+        function (img) {
+          eggStageSprites[index] = img;
+          loadedCount += 1;
+          eggStageSpritesReady = loadedCount === EGG_STAGE_PATHS.length;
+        },
+        function (err) {
+          eggStageSpritesReady = false;
+          console.warn('Egg stage image failed to load:', path, err);
+        }
+      );
+    });
   };
 
   p.setup = function () {
@@ -140,20 +151,15 @@ registerSketch('sk3', function (p) {
     if (lastError) return;
 
     if (phase === 'select') {
-      const picked = detectStageCardClick(p.mouseX, p.mouseY);
-      if (picked !== null) {
-        selectedStage = picked;
-        selectedDurationSeconds = eggStages[picked].seconds;
-        return;
-      }
-
       if (pointInRect(p.mouseX, p.mouseY, layout.durationMinus)) {
         selectedDurationSeconds = p.max(MIN_TIMER_SECONDS, selectedDurationSeconds - TIMER_STEP_SECONDS);
+        selectedStage = getStageIndexForDuration(selectedDurationSeconds);
         return;
       }
 
       if (pointInRect(p.mouseX, p.mouseY, layout.durationPlus)) {
         selectedDurationSeconds = p.min(MAX_TIMER_SECONDS, selectedDurationSeconds + TIMER_STEP_SECONDS);
+        selectedStage = getStageIndexForDuration(selectedDurationSeconds);
         return;
       }
 
@@ -205,7 +211,7 @@ registerSketch('sk3', function (p) {
 
     p.fill(94, 108, 126);
     p.textSize(15);
-    p.text('Pick the egg texture you want, then adjust the timer length below.', 55, 188, 355, 54);
+    p.text('The left column is a visual reference. Adjust the time on the right to choose your egg result.', 55, 188, 355, 54);
 
     drawStageCards(false, null);
     drawRightPreview(false);
@@ -343,7 +349,7 @@ registerSketch('sk3', function (p) {
     p.fill(44, 57, 76);
     p.textAlign(p.LEFT, p.TOP);
     p.textSize(18);
-    p.text(showLiveInfo ? 'Timer' : 'Timer Length', 506, 468);
+    p.text(showLiveInfo ? 'Timer' : 'Selected Time', 506, 468);
 
     p.fill(97, 112, 130);
     p.textSize(14);
@@ -356,8 +362,8 @@ registerSketch('sk3', function (p) {
     } else {
       p.text('Chosen time: ' + formatClock(selectedDurationSeconds), 506, 498);
       p.text('Goal: ' + stage.short, 506, 522);
-      p.text('Use the minus and plus buttons to shorten or extend the timer.', 506, 628, 220, 44);
-      drawDurationControls();
+      p.text('Change time on the right.\nMinimum: 00:30.', 506, 628, 220, 40);
+      drawDurationControls(stage.seconds);
     }
   }
 
@@ -535,14 +541,6 @@ registerSketch('sk3', function (p) {
     };
   }
 
-  function detectStageCardClick(mx, my) {
-    for (let i = 0; i < eggStages.length; i += 1) {
-      const rect = { x: 50, y: 242 + i * 88, w: 380, h: 72 };
-      if (pointInRect(mx, my, rect)) return i;
-    }
-    return null;
-  }
-
   function drawButton(rect, label, fillColor, textColor) {
     p.noStroke();
     p.fill(fillColor);
@@ -565,26 +563,22 @@ registerSketch('sk3', function (p) {
     return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h;
   }
 
-  function drawDurationControls() {
+  function drawDurationControls(defaultSeconds) {
     p.noStroke();
     p.fill('#f3e7d7');
-    p.rect(503, 510, 234, 110, 18);
-
-    p.fill(44, 57, 76);
-    p.textAlign(p.CENTER, p.TOP);
-    p.textSize(15);
-    p.text('Adjust time in 15-second steps', 620, 522);
+    p.rect(503, 560, 234, 58, 18);
 
     drawMiniControl(layout.durationMinus, '-');
     drawMiniControl(layout.durationPlus, '+');
 
     p.fill(44, 57, 76);
-    p.textSize(24);
-    p.text(formatClock(selectedDurationSeconds), 620, 565);
+    p.textAlign(p.CENTER, p.TOP);
+    p.textSize(22);
+    p.text(formatClock(selectedDurationSeconds), 620, 568);
 
     p.fill(97, 112, 130);
     p.textSize(12);
-    p.text('Suggested for this stage: ' + formatClock(getSelectedStage().seconds), 620, 596);
+    p.text('Default: ' + formatClock(defaultSeconds), 620, 594);
   }
 
   function drawMiniControl(rect, label) {
@@ -597,23 +591,17 @@ registerSketch('sk3', function (p) {
     p.text(label, rect.x + rect.w / 2, rect.y + rect.h / 2 - 2);
   }
 
-  function prepareEggStageSprites(img) {
-    const rects = [
-      { x: 0.07, y: 0.60, w: 0.12, h: 0.26 },
-      { x: 0.25, y: 0.60, w: 0.12, h: 0.26 },
-      { x: 0.43, y: 0.60, w: 0.12, h: 0.26 },
-      { x: 0.61, y: 0.60, w: 0.12, h: 0.26 },
-      { x: 0.79, y: 0.60, w: 0.12, h: 0.26 },
-    ];
-
-    eggStageSprites = rects.map(function (rect) {
-      return img.get(
-        Math.floor(img.width * rect.x),
-        Math.floor(img.height * rect.y),
-        Math.max(1, Math.floor(img.width * rect.w)),
-        Math.max(1, Math.floor(img.height * rect.h))
-      );
-    });
+  function getStageIndexForDuration(durationSeconds) {
+    let bestIndex = 0;
+    let bestDistance = Math.abs(durationSeconds - eggStages[0].seconds);
+    for (let i = 1; i < eggStages.length; i += 1) {
+      const distance = Math.abs(durationSeconds - eggStages[i].seconds);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = i;
+      }
+    }
+    return bestIndex;
   }
 
   function drawStageImage(index, cx, cy, maxW, maxH) {
