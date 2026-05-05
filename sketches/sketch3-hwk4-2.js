@@ -371,6 +371,7 @@ registerSketch('sk3', function (p) {
     const cx = 240;
     const cy = 390;
     const stageIndex = phase === 'done' ? selectedStage : getVisibleStageIndex(progress, false);
+    const stageTiming = getCurrentStageTiming();
 
     p.noStroke();
     p.fill(245, 237, 223);
@@ -382,16 +383,7 @@ registerSketch('sk3', function (p) {
     p.noFill();
     p.circle(cx, cy, 272);
 
-    if (drawStageImage(stageIndex, cx, cy + 8, 230, 230)) {
-      p.noStroke();
-      p.fill(233, 223, 204, 90);
-      p.ellipse(cx, cy + 84, 170, 28);
-    } else if (plated) {
-      drawEggOnPlate(cx, cy + 8, 1.35, texture);
-    } else {
-      drawPan(cx, cy + 10, 1.45);
-      drawEgg(texture, cx, cy, 1.34, true);
-    }
+    drawElapsedTimer(cx, cy, stageTiming, stageIndex);
 
     p.noStroke();
     p.fill(228, 184, 136);
@@ -400,19 +392,19 @@ registerSketch('sk3', function (p) {
     p.rect(60, 606, 360, 84, 18);
 
     p.fill(44, 57, 76);
-    p.textAlign(p.LEFT, p.TOP);
+    p.textAlign(p.CENTER, p.CENTER);
     p.textSize(18);
     if (phase === 'cooking') {
       const target = getSelectedStage();
-      p.text('Current step left: ' + formatClock(selectedDurationSeconds - getElapsedSeconds()), 55, 695);
+      p.text('Current step left: ' + formatClock(stageTiming.remaining), 240, 589);
       p.fill(96, 112, 130);
       p.textSize(14);
-      p.text('Goal: ' + target.title + ' | Timer: ' + formatClock(selectedDurationSeconds), 55, 724, 340, 34);
+      p.text('Goal: ' + target.title + ' | Timer: ' + formatClock(selectedDurationSeconds), 240, 648);
     } else if (phase === 'done') {
-      p.text('Target reached: ' + getSelectedStage().short, 55, 695);
+      p.text('Target reached: ' + getSelectedStage().short, 240, 589);
       p.fill(96, 112, 130);
       p.textSize(14);
-      p.text('The yolk and white now match the selected final texture.', 55, 724, 320, 34);
+      p.text('The yolk and white now match the selected final texture.', 240, 648);
     }
   }
 
@@ -438,6 +430,28 @@ registerSketch('sk3', function (p) {
       p.textAlign(p.CENTER, p.TOP);
       p.textSize(11);
       p.text(i + 1, px, y - 6);
+    }
+  }
+
+  function drawElapsedTimer(cx, cy, stageTiming, stageIndex) {
+    p.noStroke();
+    p.fill(233, 223, 204, 90);
+    p.ellipse(cx, cy + 84, 170, 28);
+
+    p.fill(44, 57, 76);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(18);
+    p.text('Stage ' + (stageIndex + 1) + ' Elapsed', cx, cy - 42);
+
+    p.textSize(42);
+    p.text(formatClock(stageTiming.elapsed), cx, cy + 4);
+
+    p.fill(97, 112, 130);
+    p.textSize(14);
+    if (phase === 'done') {
+      p.text('Finished at stage ' + (selectedStage + 1) + ' of ' + (selectedStage + 1), cx, cy + 48);
+    } else {
+      p.text('Shows elapsed time in the current stage only.', cx, cy + 48);
     }
   }
 
@@ -512,6 +526,25 @@ registerSketch('sk3', function (p) {
 
   function getElapsedSeconds() {
     return p.max(0, (p.millis() - startedAt) / 1000);
+  }
+
+  function getCurrentStageTiming() {
+    const totalStages = selectedStage + 1;
+    const stageDuration = totalStages > 0 ? selectedDurationSeconds / totalStages : selectedDurationSeconds;
+    const safeElapsed = p.constrain(getElapsedSeconds(), 0, selectedDurationSeconds);
+    const currentStageIndex = phase === 'done'
+      ? selectedStage
+      : p.min(selectedStage, Math.floor(safeElapsed / stageDuration));
+    const stageStart = currentStageIndex * stageDuration;
+    const elapsedInStage = phase === 'done' ? stageDuration : p.constrain(safeElapsed - stageStart, 0, stageDuration);
+    const remainingInStage = phase === 'done' ? 0 : p.max(0, stageDuration - elapsedInStage);
+
+    return {
+      index: currentStageIndex,
+      duration: stageDuration,
+      elapsed: elapsedInStage,
+      remaining: remainingInStage,
+    };
   }
 
   function getTextureAtProgress(progress) {
