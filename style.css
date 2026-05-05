@@ -167,6 +167,12 @@ canvas {
   margin: 0;
 }
 
+.iteration-item figcaption {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
 .iteration-item img {
   width: 100%;
   display: block;
