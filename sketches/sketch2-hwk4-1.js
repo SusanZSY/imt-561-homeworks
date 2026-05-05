@@ -1,19 +1,21 @@
 // Instance-mode sketch for tab 2
 registerSketch('sk2', function (p) {
   const CANVAS_SIZE = 800;
-  const CHEF_SPRITE_PATH = 'images/chef-default-idle.avif';
-  const CHEF_SPATULA_PATH = 'images/steps3to6-chef-spatula.jpg';
+  const CHEF_SPRITE_PATH = 'images/chef-default-idle.png';
+  const CHEF_SPATULA_PATH = 'images/steps3to6-chef-spatula.png';
   const CHEF_KNIFE_PATH = 'images/step2-chef-knife.png';
   const CHEF_CUP_PATH = 'images/step8-chef-cup.jpg';
-  const VEGETABLE_SPRITE_PATH = 'images/vegetable-sprites.jpg';
-  const EGG_PAN_PATH = 'images/step4-egg-pan.jpg';
+  const VEGETABLE_SPRITE_PATH = 'images/vegetables-transparent.png';
+  const PREP_VEGETABLES_PATH = 'images/vegetables-transparent.png';
+  const EGG_PAN_PATH = 'images/step4-egg-pan.png';
   const SINK_PATH = 'images/step1-sink.jpg';
-  const BUTTER_PAN_PATH = 'images/step3-butter-pan.jpg';
-  const BACON_PAN_PATH = 'images/step5-bacon-pan.jpg';
-  const PLATE_BREAKFAST_PATH = 'images/step9-plate-breakfast.jpg';
-  const BUTTER_TOAST_PATH = 'images/step7-butter-toast.jpg';
+  const BUTTER_PAN_PATH = 'images/step3-butter-pan.png';
+  const BACON_PAN_PATH = 'images/step5-bacon-pan.png';
+  const PLATE_BREAKFAST_PATH = 'images/step9-plate-breakfast.png';
+  const BUTTER_TOAST_PATH = 'images/step7-butter-toast.png';
+  const TOASTER_PATH = 'images/step6-toaster.png';
   const COFFEE_CUP_PATH = 'images/step8-coffee-cup.png';
-  const FULL_BREAKFAST_PATH = 'images/step10-full-breakfast.webp';
+  const FULL_BREAKFAST_PATH = 'images/step10-full-breakfast.png';
   const selectorValues = [60, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
   const steps = [
     { label: 'Wash vegetables', short: 'Wash vegetables', detail: 'Chef rinses the vegetables at the sink.', weight: 13, accent: '#79b8f3' },
@@ -49,11 +51,11 @@ registerSketch('sk2', function (p) {
 
   const layout = {
     selector: { x: 245, y: 365, rOuter: 165, rInner: 80 },
-    preview: { x: 470, y: 115, w: 290, h: 565 },
+    preview: { x: 500, y: 130, w: 265, h: 600 },
     scene: { x: 35, y: 135, w: 470, h: 610, bubbleX: 270, bubbleY: 410, bubbleR: 178 },
-    sidebar: { x: 525, y: 135, w: 240, h: 610 },
-    startButton: { x: 505, y: 700, w: 220, h: 54 },
-    resetButton: { x: 560, y: 705, w: 160, h: 42 },
+    sidebar: { x: 535, y: 135, w: 220, h: 610 },
+    startButton: { x: 530, y: 700, w: 200, h: 54 },
+    resetButton: { x: 548, y: 705, w: 164, h: 42 },
   };
 
   p.preload = function () {
@@ -118,10 +120,12 @@ registerSketch('sk2', function (p) {
     );
 
     loadSceneAsset('eggPan', EGG_PAN_PATH, { tolerance: 46 });
+    loadSceneAsset('prepVegetables', PREP_VEGETABLES_PATH, {});
     loadSceneAsset('sink', SINK_PATH, { tolerance: 36 });
     loadSceneAsset('butterPan', BUTTER_PAN_PATH, { tolerance: 42, crop: { x: 0.02, y: 0.0, w: 0.96, h: 0.84 } });
     loadSceneAsset('baconPan', BACON_PAN_PATH, { tolerance: 52, crop: { x: 0.02, y: 0.02, w: 0.88, h: 0.74 } });
     loadSceneAsset('plateBreakfast', PLATE_BREAKFAST_PATH, { tolerance: 34 });
+    loadSceneAsset('toaster', TOASTER_PATH, {});
     loadSceneAsset('butterToast', BUTTER_TOAST_PATH, { tolerance: 46 });
     loadSceneAsset('coffeeCup', COFFEE_CUP_PATH, { tolerance: 20 });
     loadSceneAsset('fullBreakfast', FULL_BREAKFAST_PATH, { tolerance: 36, crop: { x: 0.0, y: 0.0, w: 1.0, h: 0.84 } });
@@ -260,22 +264,13 @@ registerSketch('sk2', function (p) {
   function drawSelectionScreen() {
     p.fill(44, 57, 76);
     p.textAlign(p.LEFT, p.TOP);
-    p.textSize(34);
-    p.text('Breakfast Clock', 45, 40);
-
     p.fill(70, 87, 110);
     p.textSize(16);
-    p.text('1. Click the clock to choose the total cooking time.', 45, 88);
-    p.text('2. Press Start Cooking to watch the chef move through each breakfast step.', 45, 112);
+    p.text('1. Choose the total cook time on the clock.\n2. Press Start Cooking to begin.', 45, 48, 390, 54);
 
     drawSelectorClock();
     drawPreviewPanel();
     drawButton(layout.startButton, 'Start Cooking', '#d96c4f', '#f7f3ea');
-
-    p.fill(84, 100, 122);
-    p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(14);
-    p.text('The step list on the right previews how your total time is divided.', 615, 670);
   }
 
   function drawSelectorClock() {
@@ -347,7 +342,7 @@ registerSketch('sk2', function (p) {
 
     p.fill(94, 108, 126);
     p.textSize(14);
-    p.text('Every step keeps its own countdown, so you can always see what is left.', layout.preview.x + 22, layout.preview.y + 54, layout.preview.w - 44, 48);
+    p.text('Each step has its own timer.\nSee the time split here.', layout.preview.x + 22, layout.preview.y + 54, layout.preview.w - 44, 40);
 
     for (let i = 0; i < steps.length; i += 1) {
       const rowY = layout.preview.y + 110 + i * 46;
@@ -365,6 +360,11 @@ registerSketch('sk2', function (p) {
       p.fill(103, 118, 138);
       p.text(formatClock(scheduleSeconds[i]), layout.preview.x + layout.preview.w - 30, rowY + 18);
     }
+
+    p.fill(84, 100, 122);
+    p.textAlign(p.CENTER, p.TOP);
+    p.textSize(14);
+    p.text('Right panel preview:\nstep times', layout.preview.x + layout.preview.w / 2, layout.preview.y + layout.preview.h - 64);
   }
 
   function updateCookingState() {
@@ -398,7 +398,7 @@ registerSketch('sk2', function (p) {
 
     p.fill(100, 112, 126);
     p.textSize(17);
-    p.text('The full American breakfast is ready with coffee on the table.', p.width / 2, 225);
+    p.text('Breakfast is ready.\nCoffee is on the table.', p.width / 2, 225);
 
     drawTableScene();
     if (!drawSceneImage('fullBreakfast', 400, 490, 470, 290, 0)) {
@@ -413,20 +413,16 @@ registerSketch('sk2', function (p) {
   function drawTopHeader(remainingTotal, currentStepLabel) {
     drawPanel(28, 22, 744, 96, '#fff8ef');
 
-    p.fill(44, 57, 76);
-    p.textAlign(p.LEFT, p.TOP);
-    p.textSize(28);
-    p.text('Breakfast Clock', 50, 42);
-
     p.fill(94, 108, 126);
+    p.textAlign(p.LEFT, p.TOP);
     p.textSize(15);
-    p.text('Current time: ' + getCurrentTimeLabel(), 50, 78);
-    p.text('Ready by: ' + getReadyTimeLabel(), 220, 78);
+    p.text('Current time: ' + getCurrentTimeLabel(), 50, 46);
+    p.text('Ready by: ' + getReadyTimeLabel(), 50, 68);
 
     p.textAlign(p.RIGHT, p.TOP);
     p.fill(58, 77, 97);
     p.textSize(18);
-    p.text(currentStepLabel, 610, 42);
+    p.text(currentStepLabel, 610, 48);
 
     drawCountdownClock(686, 70, 34, remainingTotal, totalDurationSeconds);
   }
@@ -520,7 +516,7 @@ registerSketch('sk2', function (p) {
 
     p.fill(96, 112, 130);
     p.textSize(14);
-    p.text(allDone ? 'Everything is finished.' : 'Each step keeps a live countdown.', layout.sidebar.x + 18, layout.sidebar.y + 52);
+    p.text(allDone ? 'Everything is finished.\nAll steps are done.' : 'Live countdowns.\nCheck each step here.', layout.sidebar.x + 18, layout.sidebar.y + 52);
 
     for (let i = 0; i < steps.length; i += 1) {
       const rowY = layout.sidebar.y + 92 + i * 55;
@@ -549,9 +545,9 @@ registerSketch('sk2', function (p) {
       const label = isDone ? 'done' : formatClock(getStepRemaining(i, state, allDone));
       p.text(label, layout.sidebar.x + 34, rowY + 23);
 
-      const barX = layout.sidebar.x + 124;
+      const barX = layout.sidebar.x + 114;
       const barY = rowY + 27;
-      const barW = 92;
+      const barW = 84;
       const progress = getCompletionForStep(i, state, allDone);
       p.noStroke();
       p.fill(226, 220, 212);
@@ -571,14 +567,15 @@ registerSketch('sk2', function (p) {
     p.noStroke();
     p.fill(130, 202, 236, 120);
     p.ellipse(0, 24, 122, 34);
-    drawVegetables(-34, 16, 0.75, true);
-    drawVegetables(18, 20, 0.58, true);
+    if (!drawSceneImage('prepVegetables', 0, 12, 128, 78, 0)) {
+      drawVegetables(-34, 16, 0.75, true);
+      drawVegetables(18, 20, 0.58, true);
+    }
     p.pop();
   }
 
   function drawChopScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
-    drawChef(cx - 102, cy + 42, 1, 'chop', progress);
 
     p.push();
     p.translate(cx + 48, cy + 38);
@@ -587,14 +584,19 @@ registerSketch('sk2', function (p) {
     p.rect(-88, -10, 175, 82, 12);
     p.fill(156, 96, 62);
     p.rect(-80, -4, 160, 70, 10);
-    drawVegetables(-16, 22, 0.7, false);
+    if (!drawSceneImage('prepVegetables', 0, 18, 150, 90, 0)) {
+      drawVegetables(-16, 22, 0.7, false);
+    }
     p.pop();
+
+    // Keep the knife chef in the foreground so the pose reads clearly.
+    drawChef(cx - 102, cy + 42, 1, 'chop', progress);
   }
 
   function drawButterScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    if (!drawSceneImage('butterPan', cx + 42, cy + 34, 250, 220, 0)) {
+    if (!drawSceneImage('butterPan', cx + 42, cy + 22, 250, 220, 0)) {
       drawStove(cx + 38, cy + 52);
       const melt = p.constrain(progress * 1.2, 0, 1);
       p.push();
@@ -613,7 +615,7 @@ registerSketch('sk2', function (p) {
   function drawEggScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    if (!drawSceneImage('eggPan', cx + 42, cy + 34, 250, 250, 0)) {
+    if (!drawSceneImage('eggPan', cx + 42, cy + 22, 250, 250, 0)) {
       drawStove(cx + 38, cy + 52);
       p.push();
       p.translate(cx + 36, cy + 46);
@@ -636,7 +638,7 @@ registerSketch('sk2', function (p) {
   function drawBaconScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 270);
     drawChef(cx - 108, cy + 43, 1, 'pan', progress);
-    if (!drawSceneImage('baconPan', cx + 42, cy + 34, 250, 210, 0)) {
+    if (!drawSceneImage('baconPan', cx + 42, cy + 22, 250, 210, 0)) {
       drawStove(cx + 38, cy + 52);
       p.push();
       p.translate(cx + 36, cy + 46);
@@ -651,29 +653,30 @@ registerSketch('sk2', function (p) {
   function drawToastScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
     drawChef(cx - 95, cy + 44, 1, 'toast', progress);
+    if (!drawSceneImage('toaster', cx + 42, cy + 26, 250, 210, 0)) {
+      p.push();
+      p.translate(cx + 38, cy + 50);
+      p.noStroke();
+      p.fill(184, 70, 57);
+      p.rect(-62, 0, 122, 76, 24);
+      p.fill(255, 230, 200);
+      p.rect(-44, -8, 88, 22, 10);
+      p.fill(103, 48, 39);
+      p.rect(-22, 24, 44, 8, 4);
+      p.fill(130);
+      p.rect(48, 24, 10, 28, 4);
 
-    p.push();
-    p.translate(cx + 38, cy + 50);
-    p.noStroke();
-    p.fill(184, 70, 57);
-    p.rect(-62, 0, 122, 76, 24);
-    p.fill(255, 230, 200);
-    p.rect(-44, -8, 88, 22, 10);
-    p.fill(103, 48, 39);
-    p.rect(-22, 24, 44, 8, 4);
-    p.fill(130);
-    p.rect(48, 24, 10, 28, 4);
-
-    const pop = p.sin(progress * p.PI);
-    drawBreadSlice(-20, -18 - pop * 36, 0.9, true);
-    drawBreadSlice(18, -14 - pop * 28, 0.85, true);
-    p.pop();
+      const pop = p.sin(progress * p.PI);
+      drawBreadSlice(-20, -18 - pop * 36, 0.9, true);
+      drawBreadSlice(18, -14 - pop * 28, 0.85, true);
+      p.pop();
+    }
   }
 
   function drawSpreadScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
     drawChef(cx - 95, cy + 42, 1, 'spread', progress);
-    if (!drawSceneImage('butterToast', cx + 46, cy + 42, 250, 220, 0)) {
+    if (!drawSceneImage('butterToast', cx + 46, cy + 30, 250, 220, 0)) {
       p.push();
       p.translate(cx + 44, cy + 46);
       p.noStroke();
@@ -691,14 +694,14 @@ registerSketch('sk2', function (p) {
   function drawCoffeeScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 255);
     drawChef(cx - 98, cy + 42, 1, 'coffee', progress);
-    if (!drawSceneImage('coffeeCup', cx + 52, cy + 44, 190, 210, 0)) {
+    if (!drawSceneImage('coffeeCup', cx + 52, cy + 32, 190, 210, 0)) {
       drawCoffeeMug(cx + 52, cy + 58, 1.05, true);
     }
   }
 
   function drawPlateScene(cx, cy, progress) {
     drawCounterBase(cx, cy, 285);
-    if (!drawSceneImage('plateBreakfast', cx + 40, cy + 34, 250, 250, 0)) {
+    if (!drawSceneImage('plateBreakfast', cx + 40, cy + 22, 250, 250, 0)) {
       p.push();
       p.translate(cx + 42, cy + 48);
       p.noStroke();
@@ -783,38 +786,38 @@ registerSketch('sk2', function (p) {
       x: pulse * 5,
       y: -hop * 4 - Math.abs(fast) * 1.5,
       angle: pulse * 0.035,
-      spriteScale: 0.68,
+      spriteScale: 0.56,
       spriteX: 0,
-      spriteY: 18,
-      shadowW: 82,
-      shadowH: 18,
+      spriteY: 12,
+      shadowW: 68,
+      shadowH: 16,
     };
 
     if (isSpatulaPose(pose)) {
-      motion.spriteScale = 0.68;
-      motion.spriteY = 12;
-      motion.shadowW = 82;
-      motion.shadowH = 18;
+      motion.spriteScale = 0.56;
+      motion.spriteY = 10;
+      motion.shadowW = 68;
+      motion.shadowH = 16;
       motion.x = pulse * 4;
       motion.y = -hop * 3;
       motion.angle = pulse * 0.02;
     }
 
     if (isKnifePose(pose)) {
-      motion.spriteScale = 0.52;
+      motion.spriteScale = 0.56;
       motion.spriteY = 10;
-      motion.shadowW = 82;
-      motion.shadowH = 18;
+      motion.shadowW = 68;
+      motion.shadowH = 16;
       motion.x = pulse * 3;
       motion.y = -hop * 2.5;
       motion.angle = pulse * 0.018;
     }
 
     if (isCupPose(pose)) {
-      motion.spriteScale = 0.68;
-      motion.spriteY = 12;
-      motion.shadowW = 82;
-      motion.shadowH = 18;
+      motion.spriteScale = 0.48;
+      motion.spriteY = 10;
+      motion.shadowW = 60;
+      motion.shadowH = 15;
       motion.x = pulse * 3;
       motion.y = -hop * 2.5;
       motion.angle = pulse * 0.015;
