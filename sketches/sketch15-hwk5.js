@@ -60,6 +60,7 @@ registerSketch('sk15', function (p) {
   let countrySummaries = [];
   let worldShapes = [];
   let hoveredCountry = null;
+  let selectedCountry = null;
   let layout = null;
 
   p.preload = function () {
@@ -100,6 +101,11 @@ registerSketch('sk15', function (p) {
   };
 
   p.mouseMoved = function () {
+    p.redraw();
+  };
+
+  p.mousePressed = function () {
+    selectedCountry = findHoveredCountry();
     p.redraw();
   };
 
@@ -401,11 +407,11 @@ registerSketch('sk15', function (p) {
     p.fill('#edf3f8');
     p.rect(x, y, w, h, 18);
 
-    if (!hoveredCountry) {
+    if (!selectedCountry) {
       p.fill('#334759');
       p.textAlign(p.LEFT, p.TOP);
       p.textSize(13);
-      p.text('Hover a colored country to see its dominant trait and flavor evaluation.', x + 16, y + 16, w - 32, 24);
+      p.text('Click a colored country to see its dominant trait and flavor evaluation.', x + 16, y + 16, w - 32, 24);
 
       p.textSize(12);
       p.fill('#63788d');
@@ -424,18 +430,18 @@ registerSketch('sk15', function (p) {
     p.fill('#213346');
     p.textAlign(p.LEFT, p.TOP);
     p.textSize(17);
-    p.text(hoveredCountry.country, x + 16, y + 16);
+    p.text(selectedCountry.country, x + 16, y + 16);
 
     p.textSize(12);
     p.fill('#5e7388');
-    p.text('Dominant trait: ' + hoveredCountry.dominantTrait, x + 16, y + 44);
-    p.text('Rows in dataset: ' + hoveredCountry.recordCount, x + 16, y + 64);
+    p.text('Dominant trait: ' + selectedCountry.dominantTrait, x + 16, y + 44);
+    p.text('Rows in dataset: ' + selectedCountry.recordCount, x + 16, y + 64);
 
     const metrics = TRAITS.map(function (trait) {
       return {
         key: trait.key,
         color: colorForTrait(trait.key),
-        label: describeTraitScore(trait.key, hoveredCountry.averages[trait.key])
+        label: describeTraitScore(trait.key, selectedCountry.averages[trait.key])
       };
     });
 
