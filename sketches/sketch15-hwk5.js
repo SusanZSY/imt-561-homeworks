@@ -405,7 +405,7 @@ registerSketch('sk15', function (p) {
       p.fill('#334759');
       p.textAlign(p.LEFT, p.TOP);
       p.textSize(13);
-      p.text('Hover a colored country to see its dominant trait and category numbers.', x + 16, y + 16, w - 32, 24);
+      p.text('Hover a colored country to see its dominant trait and flavor evaluation.', x + 16, y + 16, w - 32, 24);
 
       p.textSize(12);
       p.fill('#63788d');
@@ -431,19 +431,36 @@ registerSketch('sk15', function (p) {
     p.text('Dominant trait: ' + hoveredCountry.dominantTrait, x + 16, y + 44);
     p.text('Rows in dataset: ' + hoveredCountry.recordCount, x + 16, y + 64);
 
-    let rowY = y + 16;
-    const colX = x + 180;
+    const metrics = TRAITS.map(function (trait) {
+      return {
+        key: trait.key,
+        color: colorForTrait(trait.key),
+        label: describeTraitScore(trait.key, hoveredCountry.averages[trait.key])
+      };
+    });
 
-    TRAITS.forEach(function (trait) {
-      p.fill(colorForTrait(trait.key));
-      p.circle(colX + 5, rowY + 7, 9);
+    const metricsX = x + 176;
+    const metricsY = y + 16;
+    const metricsW = w - 192;
+    const columnCount = metricsW > 420 ? 3 : 2;
+    const gutter = 18;
+    const rowsPerColumn = Math.ceil(metrics.length / columnCount);
+    const columnW = (metricsW - gutter * (columnCount - 1)) / columnCount;
+    const rowGap = 24;
+
+    metrics.forEach(function (metric, index) {
+      const columnIndex = Math.floor(index / rowsPerColumn);
+      const rowIndex = index % rowsPerColumn;
+      const itemX = metricsX + columnIndex * (columnW + gutter);
+      const itemY = metricsY + rowIndex * rowGap;
+
+      p.fill(metric.color);
+      p.circle(itemX + 5, itemY + 7, 9);
+
       p.fill('#31465c');
-      p.text(
-        trait.key + ': ' + hoveredCountry.averages[trait.key].toFixed(2),
-        colX + 18,
-        rowY
-      );
-      rowY += 24;
+      p.textAlign(p.LEFT, p.TOP);
+      p.textSize(12);
+      p.text(metric.key + ': ' + metric.label, itemX + 18, itemY, columnW - 18, 18);
     });
   }
 
@@ -670,5 +687,61 @@ registerSketch('sk15', function (p) {
   function parseNumber(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function describeTraitScore(traitKey, value) {
+    if (!Number.isFinite(value)) return 'No data';
+
+    const level = scoreLevel(value);
+
+    if (traitKey === 'Aroma') {
+      if (level === 'Exceptional') return 'highly distinctive';
+      if (level === 'Strong') return 'layered and vivid';
+      if (level === 'Balanced') return 'pleasant and clear';
+      if (level === 'Mild') return 'noticeable but light';
+      return 'muted';
+    }
+
+    if (traitKey === 'Flavor') {
+      if (level === 'Exceptional') return 'deep and complex';
+      if (level === 'Strong') return 'well-defined';
+      if (level === 'Balanced') return 'steady and pleasant';
+      if (level === 'Mild') return 'simple';
+      return 'flat';
+    }
+
+    if (traitKey === 'Acidity') {
+      if (level === 'Exceptional') return 'bright and lively';
+      if (level === 'Strong') return 'crisp and sweet';
+      if (level === 'Balanced') return 'gentle brightness';
+      if (level === 'Mild') return 'soft acidity';
+      return 'dull';
+    }
+
+    if (traitKey === 'Aftertaste') {
+      if (level === 'Exceptional') return 'long and refined';
+      if (level === 'Strong') return 'clean and lasting';
+      if (level === 'Balanced') return 'pleasant finish';
+      if (level === 'Mild') return 'short finish';
+      return 'fades quickly';
+    }
+
+    if (traitKey === 'Balance') {
+      if (level === 'Exceptional') return 'highly harmonious';
+      if (level === 'Strong') return 'well integrated';
+      if (level === 'Balanced') return 'mostly even';
+      if (level === 'Mild') return 'slightly uneven';
+      return 'disjointed';
+    }
+
+    return level.toLowerCase();
+  }
+
+  function scoreLevel(value) {
+    if (value >= 8.3) return 'Exceptional';
+    if (value >= 8.0) return 'Strong';
+    if (value >= 7.7) return 'Balanced';
+    if (value >= 7.4) return 'Mild';
+    return 'Weak';
   }
 });
