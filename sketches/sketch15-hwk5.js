@@ -6,11 +6,11 @@ registerSketch('sk15', function (p) {
   const CANVAS_HEIGHT = 760;
 
   const TRAITS = [
-    { key: 'Aroma', color: '#123a63' },
-    { key: 'Acidity', color: '#29557f' },
-    { key: 'Flavor', color: '#4878a2' },
-    { key: 'Aftertaste', color: '#73a1c4' },
-    { key: 'Balance', color: '#b6d2e7' }
+    { key: 'Aroma', color: '#4e79a7' },
+    { key: 'Acidity', color: '#f28e2b' },
+    { key: 'Flavor', color: '#59a14f' },
+    { key: 'Aftertaste', color: '#e15759' },
+    { key: 'Balance', color: '#b07aa1' }
   ];
 
   const FEATURED_COUNTRIES = ['brazil', 'colombia', 'ethiopia', 'panama'];
@@ -297,7 +297,7 @@ registerSketch('sk15', function (p) {
     p.fill('#55677b');
     p.textSize(13);
     p.text(
-      'Each country is filled by the highest average sensory score among Aroma, Acidity, Flavor, Aftertaste, and Balance, using different shades of one blue color family.',
+      'Each country is filled by the highest average sensory score among Aroma, Acidity, Flavor, Aftertaste, and Balance, using a color-blind-friendly palette with a distinct color for each trait.',
       card.x + 42,
       card.y + 62,
       card.w - 84,
