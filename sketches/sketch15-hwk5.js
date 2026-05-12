@@ -478,7 +478,7 @@ registerSketch('sk15', function (p) {
     p.text(
       'Dominant flavor trait by country. Base boundaries adapted from Natural Earth 1:110m world countries.',
       p.width / 2,
-      p.height - 18
+      p.height - 26
     );
   }
 
